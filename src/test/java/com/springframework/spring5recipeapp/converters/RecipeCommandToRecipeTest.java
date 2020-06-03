@@ -48,7 +48,7 @@ class RecipeCommandToRecipeTest {
         recipeCommand.setDifficulty(DIFFICULTY);
         recipeCommand.setDirections(DIRECTIONS);
         recipeCommand.setServings(SERVINGS);
-        recipeCommand.setSources(SOURCE);
+        recipeCommand.setSource(SOURCE);
         recipeCommand.setUrl(URL);
 
         NotesCommand notes = new NotesCommand();

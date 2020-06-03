@@ -18,14 +18,14 @@ import java.util.Set;
 public class RecipeServiceImpl implements RecipeService{
 
     private final RecipeRepository recipeRepository;
-    private final RecipeToRecipeCommand recipeToRecipeCommand;
     private final RecipeCommandToRecipe recipeCommandToRecipe;
+    private final RecipeToRecipeCommand recipeToRecipeCommand;
 
     public RecipeServiceImpl(RecipeRepository recipeRepository,
                              RecipeToRecipeCommand recipeToRecipeCommand, RecipeCommandToRecipe recipeCommandToRecipe) {
         this.recipeRepository = recipeRepository;
-        this.recipeToRecipeCommand = recipeToRecipeCommand;
         this.recipeCommandToRecipe = recipeCommandToRecipe;
+        this.recipeToRecipeCommand = recipeToRecipeCommand;
     }
 
     @Override
@@ -37,7 +37,7 @@ public class RecipeServiceImpl implements RecipeService{
         return recipeSet;
     }
 
-//    @Override
+    @Override
     public Recipe findById(Long l){
 
         Optional<Recipe> recipeOptional = recipeRepository.findById(l);
