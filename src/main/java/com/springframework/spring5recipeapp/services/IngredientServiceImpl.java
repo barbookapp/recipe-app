@@ -9,6 +9,7 @@ import com.springframework.spring5recipeapp.repositories.RecipeRepository;
 import com.springframework.spring5recipeapp.repositories.UnitOfMeasureRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -51,11 +52,13 @@ public class IngredientServiceImpl implements IngredientService {
     }
 
     @Override
-    public IngredientCommand saveIngredientCommand(IngredientCommand command){
+    @Transactional
+    public IngredientCommand saveIngredientCommand(IngredientCommand command) {
         Optional<Recipe> recipeOptional = recipeRepository.findById(command.getRecipeId());
 
         if(!recipeOptional.isPresent()){
-//            todo toss error if not found
+
+            //todo toss error if not found!
             log.error("Recipe not found for id: " + command.getRecipeId());
             return new IngredientCommand();
         } else {
@@ -73,19 +76,62 @@ public class IngredientServiceImpl implements IngredientService {
                 ingredientFound.setAmount(command.getAmount());
                 ingredientFound.setUom(unitOfMeasureRepository
                         .findById(command.getUom().getId())
-                        .orElseThrow(() -> new RuntimeException("UOM NOT FOUND"))); //todo refactor
+                        .orElseThrow(() -> new RuntimeException("UOM NOT FOUND"))); //todo address this
             } else {
-//                add new Ingredient
-                recipe.addIngredient(ingredientCommandToIngredient.convert(command));
+                //add new Ingredient
+                Ingredient ingredient = ingredientCommandToIngredient.convert(command);
+                ingredient.setRecipe(recipe);
+                recipe.addIngredient(ingredient);
             }
 
             Recipe savedRecipe = recipeRepository.save(recipe);
 
-//            todo check for fail
-            return ingredientToIngredientCommand.convert(savedRecipe.getIngredients().stream()
+            Optional<Ingredient> savedIngredientOptional = savedRecipe.getIngredients().stream()
                     .filter(recipeIngredients -> recipeIngredients.getId().equals(command.getId()))
-                    .findFirst()
-                    .get());
+                    .findFirst();
+
+            //check by description
+            if(!savedIngredientOptional.isPresent()){
+                //not totally safe... But best guess
+                savedIngredientOptional = savedRecipe.getIngredients().stream()
+                        .filter(recipeIngredients -> recipeIngredients.getDescription().equals(command.getDescription()))
+                        .filter(recipeIngredients -> recipeIngredients.getAmount().equals(command.getAmount()))
+                        .filter(recipeIngredients -> recipeIngredients.getUom().getId().equals(command.getUom().getId()))
+                        .findFirst();
+            }
+
+            //to do check for fail
+            return ingredientToIngredientCommand.convert(savedIngredientOptional.get());
+        }
+
+    }
+
+    @Override
+    public void deleteById(Long recipeId, Long idToDelete) {
+
+        log.debug("Deleting ingredient: " + recipeId + ":" + idToDelete);
+
+        Optional<Recipe> recipeOptional = recipeRepository.findById(recipeId);
+
+        if(recipeOptional.isPresent()){
+            Recipe recipe = recipeOptional.get();
+            log.debug("found recipe");
+
+            Optional<Ingredient> ingredientOptional = recipe
+                    .getIngredients()
+                    .stream()
+                    .filter(ingredient -> ingredient.getId().equals(idToDelete))
+                    .findFirst();
+
+            if(ingredientOptional.isPresent()){
+                log.debug("found Ingredient");
+                Ingredient ingredientToDelete = ingredientOptional.get();
+                ingredientToDelete.setRecipe(null);
+                recipe.getIngredients().remove(ingredientOptional.get());
+                recipeRepository.save(recipe);
+            }
+        } else {
+            log.debug("Recipe Id Not found. Id:" + recipeId);
         }
     }
 }
