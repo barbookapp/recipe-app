@@ -79,9 +79,8 @@ class RecipeServiceImplTest {
 
 //        no 'when', since method has void return type
 
-
 //        then
-        verify(recipeService, times(1)).deleteById(anyLong());
+        verify(recipeRepository, times(1)).deleteById(anyLong());
     }
 
 }
